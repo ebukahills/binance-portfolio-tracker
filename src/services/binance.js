@@ -91,7 +91,7 @@ class Binance {
             this.getUserBalances(userId)
                 .then(balances => this.saveUserBalances(userId, balances))
                 .catch(console.error);
-        }, 5000);
+        }, 60000);
     }
 
     async getUserBalances(userId) {
