@@ -8,6 +8,17 @@ const BalanceSchema = new Schema({
     balances: Schema.Types.Mixed,
 });
 
+BalanceSchema.methods.toJSON = function () {
+    const object = this.toObject();
+    // delete object._id;
+    // delete object.createdAt;
+    // delete object.updatedAt;
+    // delete object.__v;
+    // delete object.time;
+    // delete object.user;
+    return object;
+}
+
 const Balance = model('Balance', BalanceSchema);
 
 module.exports = Balance;

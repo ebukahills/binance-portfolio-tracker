@@ -3,16 +3,19 @@ const BinanceAPI = require('node-binance-api');
 const User = require('../models/User');
 const Balance = require('../models/Balance');
 
-const math = require('../utils/math');
+const Math = require('../utils/math');
 
 const { GLOBAL_BINANCE_API_KEY, GLOBAL_BINANCE_API_SECRET } = process.env;
 
 class Binance {
     constructor() {
+        this.name = 'binance';
         this.globalAPI = null;
         this.prices = {};
         this.instances = {}
     }
+
+    static name = 'binance';
 
     async initialize() {
         const users = await User.find({ active: true });
@@ -30,7 +33,6 @@ class Binance {
 
         console.log('Binance API Tasks started');
     }
-
 
     async initializeBinanceAPI({ key, secret }) {
         const binance = new BinanceAPI().options({
@@ -64,7 +66,7 @@ class Binance {
 
     saveUserBalances(userId, balances) {
         const date = new Date();
-        const timeStamp = Math.floor(date.getTime() / 1000);
+        const timeStamp = Math.Native.floor(date.getTime() / 1000);
         const time = {
             year: date.getFullYear(),
             month: date.getMonth() + 1,
@@ -103,8 +105,8 @@ class Binance {
 
                 Object.keys(balances).forEach(code => {
                     const { price, value } = this.getFiatValue(code, balances[code].total);
-                    balances[code].value = value;
                     balances[code].price = price;
+                    balances[code].value = value;
                 });
 
                 return resolve(balances);
@@ -136,7 +138,7 @@ class Binance {
             }
         }
 
-        const fiatValue = math.multiply(fiatPrice, total);
+        const fiatValue = Math.multiply(fiatPrice, total);
         return { value: fiatValue, price: fiatPrice };
     }
 
@@ -144,7 +146,7 @@ class Binance {
         const basePair = `${coin}${base}`;
         const fiatPair = `${base}USDT`;
 
-        return math.multiply(this.getPairPrice(basePair), this.getPairPrice(fiatPair));
+        return Math.multiply(this.getPairPrice(basePair), this.getPairPrice(fiatPair));
     }
 
     getPairPrice(pair) {
@@ -160,23 +162,62 @@ class Binance {
         setInterval(() => {
             this.updatePrices()
                 .catch(console.error);
-        }, 10000);
+        }, 25000);
     }
 
     async updatePrices() {
         const currentPrices = await this.getGlobalInstance().prices();
         Object.entries(currentPrices).forEach(([ticker, price]) => {
-            this.prices[ticker] = math.getValue(price);
+            this.prices[ticker] = Math.getValue(price);
         });
+    }
+
+    async listBalanceHistory(user, start, end, cb) {
+        const result = await Balance.find({
+            user, timeStamp: { $gte: start, $lte: end }
+        }).select('timeStamp value balances -_id');
+
+        return cb ? cb(result) : result;
+    }
+
+    formatBalanceHistoryForChart(history) {
+        const meta = { highestValue: 0, highestTime: 0 }
+        const keys = new Set();
+
+        const formatted = history.map((obj) => {
+
+            const highestValue = Math.Native.max(obj.value, meta.highestValue);
+            if (highestValue > meta.highestValue) {
+                meta.highestValue = highestValue;
+                meta.highestTime = obj.timeStamp;
+            }
+
+            const valuesObject = {};
+
+            Object.entries(obj.balances).forEach(([code, balance]) => {
+                valuesObject[code] = balance.value;
+                keys.add(code);
+
+                obj.balances[code].percentage = Math.percentage(balance.value, obj.value);
+
+                delete obj.balances[code].available;
+                delete obj.balances[code].order;
+                delete obj.balances[code].code;
+            });
+
+            return { ...valuesObject, ...obj.toJSON() };
+        });
+
+        return { keys: [...keys], history: formatted, meta }
     }
 
     // Static Utilities
     static filterBalancesWithValue(balances) {
         const result = {};
         Object.entries(balances).forEach(([code, { available, onOrder }]) => {
-            const availableValue = math.getValue(available);
-            const orderValue = math.getValue(onOrder);
-            const total = math.add(availableValue, orderValue);
+            const availableValue = Math.getValue(available);
+            const orderValue = Math.getValue(onOrder);
+            const total = Math.add(availableValue, orderValue);
             if (total > 0) {
                 result[code] = {
                     available: availableValue,

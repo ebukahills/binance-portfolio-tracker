@@ -9,7 +9,7 @@ const Binance = require('./services/binance');
     try {
         await DB.connect();
         await Server.start();
-        await Binance.initialize();
+        // await Binance.initialize();
     } catch (err) {
         console.error(err);
         process.exit(1);

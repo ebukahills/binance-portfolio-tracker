@@ -15,5 +15,11 @@ module.exports = {
 
     add(a, b) {
         return numeral(a).add(this.getValue(b)).value();
-    }
+    },
+
+    percentage(value, total) {
+        return this.divide(value, total) * 100;
+    },
+
+    Native: Math,
 }
