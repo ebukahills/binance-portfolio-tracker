@@ -5,11 +5,19 @@ const DB = require('./db');
 const Server = require('./server');
 const Binance = require('./services/binance');
 
+const { INSTANCE_TYPE } = process.env;
+
+const instanceTypes = ['SERVER', 'BOTH', 'JOB'];
+
 (async () => {
     try {
         await DB.connect();
-        await Server.start();
-        // await Binance.initialize();
+        if (instanceTypes.slice(0, 2).includes(INSTANCE_TYPE)) {
+            await Server.start();
+        }
+        if (instanceTypes.slice(1, 3).includes(INSTANCE_TYPE)) {
+            await Binance.initialize();
+        }
     } catch (err) {
         console.error(err);
         process.exit(1);
