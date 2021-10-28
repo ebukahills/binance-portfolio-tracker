@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "gcloud app deploy --appyaml=app.production.yaml",
+    "deploy:staging": "gcloud app deploy --appyaml=app.staging.yaml"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,11 @@
+runtime: nodejs12 # or nodejs10
+
+# service: production
+
+instance_class: F1
+
+handlers:
+- url: /.*
+  secure: always
+  redirect_http_response_code: 301
+  script: auto
